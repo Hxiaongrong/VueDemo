@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel="stylesheet"
+	href="./js/node_modules/element-ui/lib/theme-chalk/index.css">
+<script src="./js/jquery.min.js"></script>
+<script src="./js/vue.min.js"></script>
+<script src="./js/axios.min.js"></script>
+<script src="./js/vue-resource.js"></script>
+<script src="./js/vue-router.js"></script>
+<script src="./js/node_modules/element-ui/lib/index.js"></script>
+<style>
+.el-table .warning-row {
+	background: oldlace;
+}
+
+.el-table .success-row {
+	background: #f0f9eb;
+}
+
+#app {
+	width: 700px;
+	margin: auto;
+	text-align: center;
+}
+.el-select .el-input {
+    width: 130px;
+  }
+  .input-with-select .el-input-group__prepend {
+    background-color: #fff;
+  }
+</style>
+</head>
+
+<body>
+	<div id="app">
+
+		<div style="margin-top: 15px;">
+			<el-input placeholder="请输入内容" v-model="input4" class="input-with-select"> 
+				<el-select v-model="select" slot="prepend" placeholder="请选择" @change="getValue"> 
+					<el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value"></el-option>
+				</el-select> 
+				<el-button slot="append" icon="el-icon-search" @click = "searchByValue()"></el-button>
+			</el-input>
+		</div>		<br /> 
+		<template> <el-table :data="heros" border
+			style="width: 100%"> <el-table-column prop="name"
+			label="名称" align="center" width="180"> </el-table-column> <el-table-column
+			prop="hp" label="血量" align="center" width="280"> </el-table-column> <el-table-column
+			label="操作"> <template slot-scope="scope">
+		<el-button size="mini" @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
+		<el-button size="mini" type="danger"
+			@click="handleDelete(scope.$index, scope.row)">删除</el-button> </template> </el-table-column> </el-table> </template>
+		<br /> <br /> <br />
+		<el-pagination @current-change="handleCurrentChange"
+			:current-page="currentPage" background align="center"
+			layout="prev, pager, next" :total="length"> </el-pagination>
+		<br /> <br /> <br />
+		<el-form :model="hero4Add" ref="hero4Add" label-width="100px">
+		<el-form-item label="英雄名称" prop="name"
+			:rules="[{ required: true, message: '名称不能为空'}]"> <el-input
+			type="name" size="medium" v-model="hero4Add.name"
+			style="width:180px;"></el-input> </el-form-item> <el-form-item label="英雄血量"
+			prop="hp" :rules="[{ type: 'number', message: '血量必须为数字值'}]">
+		<el-input type="hp" size="medium" v-model.number="hero4Add.hp"
+			style="width:180px;"></el-input> </el-form-item> <el-form-item> <el-button
+			type="primary" @click="submitForm('hero4Add')">添加</el-button> <el-button
+			@click="resetForm('hero4Add')">重置</el-button> </el-form-item> </el-form>
+	</div>
+	<script type="text/javascript">
+		var date4Vue = {
+			 options: [{
+         	 	value: 'name',
+          		label: '英雄名称'
+        	 	}, {
+          		value: 'hp',
+          		label: '英雄血量'
+        		}],
+        	input4: '',//输入项
+			input5: '',//选择项
+      		select: '',
+			heros : [],
+			hero4Add : {
+				id : 0,
+				name : '输入名称',
+				hp : '0'
+			},
+			currentPage : 1,
+			length : 100,
+			pagination : {}
+		};
+		var vue = new Vue({
+			el : '#app',
+			data : date4Vue,
+			mounted : function() { //mounted　表示这个 Vue 对象加载成功了
+				this.list(this.currentPage);
+			},
+			methods : {
+				//列出表格数据
+				list : function(start) {
+					//数据
+					var url = "heroes?start=" + start;
+					axios.get(url).then(function(response) {
+						Vue.set(date4Vue, 'length', response.data.pages * 10);
+						date4Vue.pagination = response.data;
+						date4Vue.heros = response.data.list;
+					});
+				},
+				deletehero : function(heroid) {
+					var url = "heroes/" + heroid;
+					axios.delete(url).then(function(response) {
+						vue.list(vue.currentPage);
+					});
+				},
+				//分页点击跳转
+				handleCurrentChange : function(currentPage) {
+					if(currentPage==undefined){
+						currentPage =1;
+					}
+					vue.currentPage = currentPage;
+					this.searchByValue(vue.currentPage);
+					
+				},
+	
+				//编辑当前行
+				handleEdit : function(index, row) {
+					var url = "editHeros?id=" + row.id;
+					window.location.href = url;
+				},
+				handleDelete : function(index, row) {
+					this.deletehero(row.id);
+				},
+				add : function(event) {
+					var url = "heroes";
+					axios.post(url, this.hero4Add).then(function(response) {
+						vue.list(1);
+					});
+					Vue.set(date4Vue, 'hero4Add', {
+						id : 0,
+						name : '输入名称',
+						hp : 0
+					});
+				},
+	
+				submitForm (formName) {
+					this.$refs[formName].validate((valid) => {
+						if (valid) {
+							this.add();
+						} else {
+							console.log('error submit!!');
+							return false;
+						}
+					});
+				},
+				resetForm (formName) {
+					this.$refs[formName].resetFields();
+					console.log("resetFields");
+				},
+				getValue: function(value){
+					vue.input5 = value;
+					console.log(vue.input5);
+				},
+				searchByValue : function(start){
+					if(start ==undefined ) start =1;
+					url = "searchByValue?value="+vue.input5+"&con="+vue.input4+"&start="+start;
+					//console.log(url);
+					axios.get(url).then(function(response) {
+						Vue.set(date4Vue, 'length', response.data.pages * 10);
+						vue.pagination = response.data;
+						vue.heros = response.data.list;
+						this.currentPage = 1;
+					});
+				}
+			}
+		});
+	</script>
+</body>
+</html>

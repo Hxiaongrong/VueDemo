@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel="stylesheet"
+	href="./js/node_modules/element-ui/lib/theme-chalk/index.css">
+<script src="./js/jquery.min.js"></script>
+<script src="./js/vue.min.js"></script>
+<script src="./js/axios.min.js"></script>
+<script src="./js/vue-resource.js"></script>
+<script src="./js/vue-router.js"></script>
+<script src="./js/node_modules/element-ui/lib/index.js"></script>
+
+<style>
+.el-table .warning-row {
+	background: oldlace;
+}
+
+.el-table .success-row {
+	background: #f0f9eb;
+}
+
+#app {
+	width: 600px;
+	margin: auto;
+	text-align: center;
+}
+</style>
+</head>
+
+<body>
+	<div id="app">
+		<el-form :model="hero4Update" ref="hero4Update" label-width="100px">
+			<el-form-item label="英雄名称" prop="name" :rules="[{ required: true, message: '名称不能为空'}]">
+				<el-input type="name" size ="medium" v-model="hero4Update.name" style="width:180px;"></el-input> 
+			</el-form-item>
+			<el-form-item label="英雄血量" prop="hp" :rules="[{ type: 'number', message: '血量必须为数字值'}]">
+				<el-input type="hp" size ="medium" v-model.number="hero4Update.hp" style="width:180px;"></el-input>
+			</el-form-item> 
+			<el-form-item>
+				<el-button type="primary" @click="submitForm('hero4Update')">提交</el-button>
+				<el-button @click="resetForm('hero4Update')">重置</el-button> 
+				<el-button @click="cancle()">取消</el-button> 
+			</el-form-item>
+		</el-form>
+	</div>
+
+	<script type="text/javascript">
+	    function getUrlParms(name){
+           var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+           var r = window.location.search.substr(1).match(reg);
+           if(r!=null)
+               return unescape(r[2]);
+           return null;
+    	}
+    	
+    	var data4Vue = {
+            heros: [],
+            hero4Update: { id: 0, name: '', hp: '0'}
+    	};
+		var vue = new Vue({
+			el : '#app',
+			data : data4Vue,
+	        mounted:function(){ //mounted　表示这个 Vue 对象加载成功了
+				this.get();
+	            console.log("aa");
+	        }, 
+			methods : {
+				get : function() {
+					var id = getUrlParms("id");
+                	var url = "heroes/"+id;
+                	console.log(url);
+                	axios.get(url).then(function(response) {
+                   		vue.hero4Update = response.data;
+                	})    
+				},
+				update:function (event) {
+                	var url = "heroes/"+vue.hero4Update.id;
+                	axios.put(url,vue.hero4Update).then(function(response){
+                    	location.href="listHeros";
+                	});
+            	},
+				submitForm (formName) {
+					this.$refs[formName].validate((valid) => {
+						if (valid) {
+							this.update();
+						} else {
+							console.log('error submit!!');
+							return false;
+						}
+					});
+				},
+				resetForm (formName) {
+					this.$refs[formName].resetFields();
+					console.log("resetFields");
+				},
+				cancle : function (){
+					location.href="listHeros";
+				}
+			}
+		});
+	</script>
+</body>
+</html>
